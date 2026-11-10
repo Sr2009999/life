@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&display=swap">
 <meta name="theme-color" content="#14100d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Mijn App"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="apple-touch-icon.png">
 <title>Mijn App</title>
@@ -77,7 +77,7 @@ nav button:nth-child(2){--d:#e08a5a}nav button:nth-child(3){--d:#a9b36a}nav butt
 .tile small{font-size:12px;font-weight:600;opacity:.8;letter-spacing:.04em}
 .tile .n{display:block;font-size:clamp(26px,7vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .tile .s{font-size:12px;opacity:.75;margin-top:6px}
-.w2{grid-column:span 2}
+.w2{grid-column:span 2}.w4{grid-column:1/-1}html{touch-action:manipulation}input,select,textarea{font-size:16px}
 .t1{background:linear-gradient(150deg,#8d5636,#5c3822)}.t2{background:linear-gradient(150deg,#6e733b,#454a28)}.t3{background:linear-gradient(150deg,#5b616e,#3b404b)}.t4{background:linear-gradient(150deg,#c48a2c,#8a5c1a)}.t5{background:linear-gradient(150deg,#4f6b57,#32463a)}
 </style>
 </head>
@@ -85,8 +85,8 @@ nav button:nth-child(2){--d:#e08a5a}nav button:nth-child(3){--d:#a9b36a}nav butt
 <main id="app"></main>
 <nav id="nav"></nav>
 <script>
-var T=new Date().toISOString().slice(0,10),page='home';
-var D={bal:0,tx:[],goals:[],plan:[],notes:[],tasks:[],hl:{},habits:[],exams:[],grades:[],dreams:[]};
+var T=iso(new Date()),page='home';
+var D={bal:0,tx:[],goals:[],plan:[],notes:[],tasks:[],hl:{},habits:[],exams:[],grades:[],dreams:[],ideas:[],hw:[]};
 var S=JSON.parse(JSON.stringify(D));
 try{var raw=localStorage.getItem('mijnapp');if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
 function save(){try{localStorage.setItem('mijnapp',JSON.stringify(S))}catch(e){}}
@@ -179,9 +179,39 @@ P.doelen=function(){
  return '<h1>⭐ Doelen en dromen</h1><div class="c"><h2>Nieuw</h2><input id="dt" placeholder="Wat wil je bereiken?"><div class="r"><select id="dk"><option>Doel</option><option>Droom</option></select><input id="dd" type="date"></div><div class="mu" style="margin-bottom:8px">Met een datum komt het ook in je agenda.</div><button data-a="addDream" style="width:100%">Toevoegen</button></div>'+
  (S.dreams.map(function(m){var n=m.steps.filter(function(s){return s.x}).length,p=m.steps.length?n/m.steps.length*100:0;return '<div class="c"><div class="r" style="align-items:center"><div><b>'+esc(m.t)+'</b><div class="mu">'+m.k+(m.d?' · '+dt(m.d):'')+'</div></div><span style="flex:0 0 auto">'+del('delDream',m.id)+'</span></div>'+(m.steps.length?'<div class="bar"><i style="width:'+p+'%"></i></div>':'')+m.steps.map(function(s,j){return '<div class="row"><button class="chk'+(s.x?' on':'')+'" data-a="togStep" data-i="'+m.id+':'+j+'">'+(s.x?'✓':'')+'</button><div class="t'+(s.x?' done':'')+'">'+esc(s.t)+'</div>'+del('delStep',m.id+':'+j)+'</div>'}).join('')+'<div class="r" style="margin-top:8px"><input id="s'+m.id+'" placeholder="Stap toevoegen" style="margin:0"><button data-a="addStep" data-i="'+m.id+'" style="flex:0 0 auto">+</button></div></div>'}).join('')||'<div class="mu">Schrijf je doelen en dromen op en knip ze in stappen.</div>')};
 NAV.push(['school','🎓','School'],['doelen','⭐','Doelen']);
+function wk(k){var d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)}
+function wn(m){var d=new Date(m+'T12:00:00');d.setDate(d.getDate()+3);var y=new Date(d.getFullYear(),0,4,12);return 1+Math.round(((d-y)/864e5-3+((y.getDay()+6)%7))/7)}
+function f1(n){return String(Math.round(n*10)/10).replace('.',',')}
+P.gezondheid=function(){
+ var h=S.hl[T]||{w:0,s:0,m:0,mood:0};
+ function sc(x){return Math.round((Math.min(x.w/8,1)+Math.min(x.s/8,1)+Math.min(x.m/30,1))/3*100)}
+ var tips=[];if(h.w<8)tips.push('Nog '+(8-h.w)+' glazen water te gaan.');if(h.s&&h.s<7)tips.push('Minder dan 7 uur slaap: ga vanavond eerder naar bed.');if(h.m<30)tips.push('Beweeg nog '+(30-h.m)+' min voor je dagdoel.');if(h.mood&&h.mood<=2)tips.push('Rotdag? Praat erover met iemand of ga even naar buiten.');if(!tips.length)tips.push('Top dag, je zit op al je doelen!');
+ var W={};Object.keys(S.hl).forEach(function(k){var m=wk(k);(W[m]=W[m]||[]).push(k)});
+ var wl=Object.keys(W).sort().reverse().map(function(m){
+  var ks=W[m],n=ks.length,A=function(f){return ks.reduce(function(s,k){return s+(S.hl[k][f]||0)},0)},sl=ks.filter(function(k){return S.hl[k].s>0}),
+  asl=sl.length?sl.reduce(function(s,k){return s+S.hl[k].s},0)/sl.length:0,asc=ks.reduce(function(s,k){return s+sc(S.hl[k])},0)/n,bars='',i,k2,x;
+  for(i=0;i<7;i++){k2=addDays(m,i);x=S.hl[k2];bars+='<div><i style="height:'+Math.max((x?sc(x):0)*.5,3)+'px"></i>'+new Date(k2+'T12:00:00').toLocaleDateString('nl-NL',{weekday:'narrow'})+'</div>'}
+  function st(l,val){return '<div><div class="mu">'+l+'</div><b style="font-size:18px">'+val+'</b></div>'}
+  return '<div class="c"><div class="r" style="align-items:center"><b>Week '+wn(m)+(m==wk(T)?' · deze week':'')+'</b><span class="mu" style="text-align:right">'+dt(m)+' – '+dt(addDays(m,6))+'</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0">'+st('Score',Math.round(asc)+'%')+st('Water',f1(A('w')/n))+st('Slaap',asl?f1(asl)+' u':'–')+st('Beweging',Math.round(A('m')/n)+' min')+'</div><div class="cols">'+bars+'</div><div class="mu" style="margin-top:6px">'+n+(n==1?' dag':' dagen')+' ingevuld · gemiddelde per dag</div></div>'}).join('');
+ return '<h1>Gezondheid</h1><div class="c"><h2>Vandaag · score</h2><div class="big">'+sc(h)+'%</div><div class="bar"><i style="width:'+sc(h)+'%"></i></div><div style="margin-top:10px">'+tips.map(function(t){return '<div>'+t+'</div>'}).join('')+'</div><div class="mu" style="margin-top:8px">Elke nieuwe dag begint weer op nul.</div></div>'+
+ '<div class="c"><h2>Water (doel 8 glazen)</h2><div class="r" style="align-items:center"><button data-a="water" data-i="-1">−</button><div class="big" style="text-align:center">'+h.w+'</div><button data-a="water" data-i="1">+</button></div></div>'+
+ '<div class="c"><h2>Slaap en beweging</h2><div class="r"><div><div class="mu">Naar bed</div><input id="hb" type="time" value="'+(h.bt||'')+'"></div><div><div class="mu">Wakker</div><input id="hw" type="time" value="'+(h.wt||'')+'"></div></div>'+(h.s?'<div class="mu" style="margin-bottom:8px">Geslapen: '+f1(h.s)+' uur</div>':'')+'<input id="hm" inputmode="numeric" placeholder="Beweging vandaag (min)" value="'+(h.m||'')+'"><button data-a="setHl" style="width:100%">Opslaan</button></div>'+
+ '<div class="c"><h2>Hoe voel je je?</h2><div class="r mood">'+[1,2,3,4,5].map(function(i){return '<button class="'+(h.mood==i?'on':'')+'" data-a="mood" data-i="'+i+'">'+i+'</button>'}).join('')+'</div></div>'+
+ '<h2 style="margin-top:22px">Geschiedenis per week</h2>'+(wl||'<div class="mu">Zodra je iets invult, verschijnt hier je weekoverzicht.</div>')+'<div class="mu">Dit is een hulpmiddel, geen medisch advies.</div>'};
+function best(){return S.ideas.slice().sort(function(a,b){return b.s-a.s||b.id-a.id})[0]}
+P.ideeen=function(){
+ var l=S.ideas.slice().sort(function(a,b){return b.s-a.s||b.id-a.id});
+ return '<h1>Ideeën</h1><div class="c"><h2>Nieuw idee</h2><input id="it" placeholder="Naam van het idee"><textarea id="iz" rows="2" placeholder="Wat is het idee? Voor wie, en hoe verdien je eraan?"></textarea><div class="r"><input id="is" inputmode="numeric" placeholder="Score 1-10 (standaard 5)"><button data-a="addIdea" style="flex:0 0 auto">Toevoegen</button></div></div>'+
+  (l.map(function(x,j){return '<div class="c" style="'+(j==0?'border-color:var(--ac)':'')+'"><div class="r" style="align-items:center"><div><div class="mu" style="letter-spacing:.08em">'+(j==0?'BESTE IDEE':'#'+(j+1))+'</div><b style="font-size:18px">'+esc(x.t)+'</b></div><span style="flex:0 0 auto;font-size:28px;font-weight:700;color:var(--ac)">'+x.s+'<span class="mu">/10</span></span></div>'+(x.n?'<div class="mu" style="margin:8px 0;white-space:pre-wrap">'+esc(x.n)+'</div>':'')+'<div class="r" style="margin-top:10px"><button data-a="scoreIdea" data-i="'+x.id+':-1">−</button><button data-a="scoreIdea" data-i="'+x.id+':1">+</button><span style="flex:0 0 auto">'+del('delIdea',x.id)+'</span></div></div>'}).join('')||'<div class="mu">Schrijf al je bedrijfsideeen op. Het idee met de hoogste score komt bovenaan.</div>')};
+NAV.push(['ideeen','','Ideeën']);
+P.huiswerk=function(){
+ var o=S.hw.filter(function(x){return !x.x}).sort(function(a,b){return (a.d||'9999').localeCompare(b.d||'9999')}),dn=S.hw.filter(function(x){return x.x});
+ function row(x){var late=!x.x&&x.d&&x.d<T;return '<div class="row"><button class="chk'+(x.x?' on':'')+'" data-a="togHw" data-i="'+x.id+'">'+(x.x?'✓':'')+'</button><div class="t'+(x.x?' done':'')+'"><b>'+x.v+'</b> · '+esc(x.t)+(x.d?'<div class="mu'+(late?' out':'')+'">'+(late?'Te laat · ':'')+dt(x.d)+'</div>':'')+'</div>'+del('delHw',x.id)+'</div>'}
+ return '<h1>Huiswerk</h1><div class="c"><h2>Nieuw huiswerk</h2><div class="r"><select id="hv">'+opts(VAK)+'</select><input id="hd" type="date"></div><input id="hq" placeholder="Wat moet je maken of leren?"><div class="mu" style="margin-bottom:8px">Met een inleverdatum komt het ook in je agenda.</div><button data-a="addHw" style="width:100%">Toevoegen</button></div><div class="c"><h2>Te doen ('+o.length+')</h2>'+(o.map(row).join('')||'<div class="mu">Geen huiswerk. Mooi!</div>')+'</div>'+(dn.length?'<div class="c"><h2>Klaar</h2>'+dn.map(row).join('')+'</div>':'')};
+NAV.splice(NAV.findIndex(function(n){return n[0]=='school'})+1,0,['huiswerk','','Huiswerk']);
 NAV.unshift(['home','','Home']);
 function e0(n){return '€ '+Math.round(n).toLocaleString('nl-NL')}
-function tile(c,go,l,n,s,w){return '<div class="tile '+c+(w?' w2':'')+'" data-a="nav" data-i="'+go+'"><small>'+l+'</small><div><span class="n">'+n+'</span><div class="s">'+s+'</div></div></div>'}
+function tile(c,go,l,n,s,w){return '<div class="tile '+c+(w==4?' w4':w?' w2':'')+'" data-a="nav" data-i="'+go+'"><small>'+l+'</small><div><span class="n">'+n+'</span><div class="s">'+s+'</div></div></div>'}
 P.home=function(){
  var hr=new Date().getHours(),gr=hr<12?'Goedemorgen':hr<18?'Goedemiddag':'Goedenavond',td=items(T),open=S.tasks.filter(function(t){return !t.x}),ym=T.slice(0,7),by={},mt=0;
  S.tx.forEach(function(t){if(t.t=='u'&&t.dt.slice(0,7)==ym){mt+=t.a;by[t.c]=(by[t.c]||0)+t.a}});
@@ -199,15 +229,21 @@ P.home=function(){
  tile('t5','taken','OPEN TAKEN',open.length,open.length?esc(open[0].t):'Alles gedaan')+
  tile('t3','gezondheid','GEZONDHEID',sc+'%','Score vandaag')+
  tile('t1','doelen','DOELEN EN DROMEN',st?dn+' / '+st:S.dreams.length,st?'stappen gezet':'Nog geen stappen',1)+
- tile('t2','school','GEMIDDELD CIJFER',gw?ga.toFixed(1).replace('.',','):'–',gw?S.grades.length+' cijfers':'Nog geen cijfers',1)+'</div>'};
+ tile('t2','school','GEMIDDELD CIJFER',gw?ga.toFixed(1).replace('.',','):'–',gw?S.grades.length+' cijfers':'Nog geen cijfers',1)+tile('t4','ideeen','BESTE BEDRIJFSIDEE',best()?esc(best().t):'Nog geen idee',best()?best().s+'/10 · '+S.ideas.length+(S.ideas.length==1?' idee':' ideeën'):'Schrijf je eerste idee op',4)+'</div>'};
 var EM=/[\u{1F300}-\u{1FAFF}\u2600-\u26FF\u2B50\u2764\u2705\uFE0F\u200D]+\s?/gu;
 var IC={geld:'<path d="M3 7h16a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 7l12-3v3M16 14h2"/>',planning:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',taken:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>',notities:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7"/>',gezondheid:'<path d="M3 12h4l2-5 4 10 2-5h6"/>',school:'<path d="M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"/>',doelen:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>'};
-function render(){var h=P[page]();['😞','😕','😐','🙂','😄'].forEach(function(e,i){h=h.split(e).join(i+1)});document.getElementById('app').innerHTML='<div class="eb">'+new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+' · Mijn App</div>'+h.replace(EM,'');document.getElementById('nav').innerHTML=NAV.map(function(n){return '<button class="'+(n[0]==page?'on':'')+'" data-a="nav" data-i="'+n[0]+'"><svg viewBox="0 0 24 24">'+(IC[n[0]]||'')+'</svg>'+n[2]+'</button>'}).join('')}
+function render(){T=iso(new Date());var h=P[page]();['😞','😕','😐','🙂','😄'].forEach(function(e,i){h=h.split(e).join(i+1)});document.getElementById('app').innerHTML='<div class="eb">'+new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'})+' · Mijn App</div>'+h.replace(EM,'');document.getElementById('nav').innerHTML=NAV.map(function(n){return '<button class="'+(n[0]==page?'on':'')+'" data-a="nav" data-i="'+n[0]+'"><svg viewBox="0 0 24 24">'+(IC[n[0]]||'')+'</svg>'+n[2]+'</button>'}).join('')}
 function H(){return S.hl[T]||(S.hl[T]={w:0,s:0,m:0,mood:0})}
 function idx(a,i){return a.findIndex(function(x){return x.id==i})}
 var A={
 nav:function(i){page=i;window.scrollTo(0,0)},
 pv:function(i){pv=i;po=0},
+addHw:function(){if(!v('hq'))return;var id=Date.now(),d=v('hd');S.hw.push({id:id,v:v('hv'),t:v('hq'),d:d,x:0});if(d)S.plan.push({id:id+1,t:'Huiswerk '+v('hv')+': '+v('hq'),d:d,h:'',k:'School',r:id})},
+togHw:function(i){var x=S.hw[idx(S.hw,i)];x.x=x.x?0:1},
+delHw:function(i){S.hw.splice(idx(S.hw,i),1);S.plan=S.plan.filter(function(x){return x.r!=i})},
+addIdea:function(){if(!v('it'))return;S.ideas.push({id:Date.now(),t:v('it'),n:v('iz'),s:Math.max(1,Math.min(10,Math.round(num(v('is')))||5))})},
+scoreIdea:function(i){var a=i.split(':'),x=S.ideas[idx(S.ideas,a[0])];x.s=Math.max(1,Math.min(10,x.s+Number(a[1])))},
+delIdea:function(i){S.ideas.splice(idx(S.ideas,i),1)},
 addExam:function(){var vk=v('ev'),n=v('en'),d=v('ed'),s=v('es'),k=Math.max(1,Math.min(14,parseInt(v('ek'))||3));if(!d)return;var id=Date.now();S.exams.push({id:id,v:vk,n:n,d:d,s:s});S.plan.push({id:id+1,t:'📝 Toets '+vk+(n?': '+n:''),d:d,h:'',k:'School',r:id});for(var i=1;i<=k;i++){var dd=addDays(d,-i);if(dd<T)continue;S.plan.push({id:id+1+i,t:'Leren '+vk+(s?': '+s:''),d:dd,h:v('eh'),k:'School',r:id})}},
 delExam:function(i){S.exams=S.exams.filter(function(x){return x.id!=i});S.plan=S.plan.filter(function(x){return x.r!=i})},
 addGrade:function(){var c=num(v('cc'));if(c<=0||c>10)return;S.grades.unshift({id:Date.now(),v:v('cv'),c:c,w:num(v('cw'))||1,n:v('cn')})},
@@ -234,13 +270,16 @@ togTask:function(i){var t=S.tasks[idx(S.tasks,i)];t.x=t.x?0:1},
 delTask:function(i){S.tasks.splice(idx(S.tasks,i),1)},
 clearDone:function(){S.tasks=S.tasks.filter(function(t){return !t.x})},
 water:function(i){var h=H();h.w=Math.max(0,h.w+Number(i))},
-setHl:function(){var h=H();h.s=num(v('hs'));h.m=Math.round(num(v('hm')))},
+setHl:function(){var h=H(),b=v('hb'),w=v('hw');if(b&&w){var a=b.split(':'),c=w.split(':'),m=(c[0]*60+ +c[1])-(a[0]*60+ +a[1]);if(m<=0)m+=1440;h.bt=b;h.wt=w;h.s=Math.round(m/6)/10}h.m=Math.round(num(v('hm')))},
 mood:function(i){H().mood=Number(i)},
 addHab:function(){if(!v('ht'))return;S.habits.push({id:Date.now(),n:v('ht'),l:{}})},
 togHab:function(i){var h=S.habits[idx(S.habits,i)];if(h.l[T])delete h.l[T];else h.l[T]=1},
 delHab:function(i){S.habits.splice(idx(S.habits,i),1)}
 };
 document.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;A[b.dataset.a](b.dataset.i);save();render()});
+document.addEventListener('gesturestart',function(e){e.preventDefault()});
+document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault()},{passive:false});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)render()});
 render();
 </script>
 </body>
