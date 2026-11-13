@@ -78,6 +78,11 @@ nav button:nth-child(2){--d:#e08a5a}nav button:nth-child(3){--d:#a9b36a}nav butt
 .tile .n{display:block;font-size:clamp(26px,7vw,36px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .tile .s{font-size:12px;opacity:.75;margin-top:6px}
 .w2{grid-column:span 2}.w4{grid-column:1/-1}html{touch-action:manipulation}input,select,textarea{font-size:16px}
+button.imp{width:26px;height:26px;border-radius:50%;padding:0;border:1.5px solid var(--mu);color:var(--mu);font-weight:800;font-size:13px;line-height:1;flex:none}
+button.imp.on{background:var(--ac);border-color:var(--ac);color:var(--on)}
+#pop{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px))}
+.pb{background:#1e1812;border:1px solid var(--ln);border-radius:22px;padding:22px;width:100%;max-width:420px;max-height:80%;overflow:auto}
+.pt{font-size:26px;font-weight:700;letter-spacing:-.03em;margin-bottom:8px}
 .t1{background:linear-gradient(150deg,#8d5636,#5c3822)}.t2{background:linear-gradient(150deg,#6e733b,#454a28)}.t3{background:linear-gradient(150deg,#5b616e,#3b404b)}.t4{background:linear-gradient(150deg,#c48a2c,#8a5c1a)}.t5{background:linear-gradient(150deg,#4f6b57,#32463a)}
 </style>
 </head>
@@ -207,7 +212,22 @@ NAV.push(['ideeen','','Ideeën']);
 P.huiswerk=function(){
  var o=S.hw.filter(function(x){return !x.x}).sort(function(a,b){return (a.d||'9999').localeCompare(b.d||'9999')}),dn=S.hw.filter(function(x){return x.x});
  function row(x){var late=!x.x&&x.d&&x.d<T;return '<div class="row"><button class="chk'+(x.x?' on':'')+'" data-a="togHw" data-i="'+x.id+'">'+(x.x?'✓':'')+'</button><div class="t'+(x.x?' done':'')+'"><b>'+x.v+'</b> · '+esc(x.t)+(x.d?'<div class="mu'+(late?' out':'')+'">'+(late?'Te laat · ':'')+dt(x.d)+'</div>':'')+'</div>'+del('delHw',x.id)+'</div>'}
- return '<h1>Huiswerk</h1><div class="c"><h2>Nieuw huiswerk</h2><div class="r"><select id="hv">'+opts(VAK)+'</select><input id="hd" type="date"></div><input id="hq" placeholder="Wat moet je maken of leren?"><div class="mu" style="margin-bottom:8px">Met een inleverdatum komt het ook in je agenda.</div><button data-a="addHw" style="width:100%">Toevoegen</button></div><div class="c"><h2>Te doen ('+o.length+')</h2>'+(o.map(row).join('')||'<div class="mu">Geen huiswerk. Mooi!</div>')+'</div>'+(dn.length?'<div class="c"><h2>Klaar</h2>'+dn.map(row).join('')+'</div>':'')};
+ return '<h1>Huiswerk</h1><div class="c"><h2>Nieuw huiswerk</h2><div class="r"><select id="hv">'+opts(VAK)+'</select><input id="hd" type="date"></div><input id="hq" placeholder="Wat moet je maken of leren?"><div class="mu" style="margin-bottom:8px">Met een inleverdatum komt het ook in je agenda.</div><button data-a="addHw" style="width:100%">Toevoegen</button></div><div class="c"><h2>Te doen ('+o.length+')</h2>'+(o.map(row).join('')||'<div class="mu">Geen huiswerk. Mooi!</div>')+'</div>'+(dn.length?'<div class="c"><h2>Klaar</h2>'+dn.map(row).join('')+'</div>':'')+work(o)};
+var IM={delTask:'tasks',delNote:'notes',delHw:'hw',delPlan:'plan',delIdea:'ideas',delDream:'dreams'};
+function del(a,i){var f='',k=IM[a];if(k){var x=S[k][idx(S[k],i)];f='<button class="g imp'+(x&&x.b?' on':'')+'" data-a="imp" data-i="'+k+':'+i+'" aria-label="Belangrijk">!</button>'}return f+'<button class="g" data-a="'+a+'" data-i="'+i+'" aria-label="Verwijder">✕</button>'}
+function important(){var L=[];
+ S.tasks.forEach(function(x){if(x.b&&!x.x)L.push(['Taak',x.t])});
+ S.hw.forEach(function(x){if(x.b&&!x.x)L.push(['Huiswerk',x.v+': '+x.t+(x.d?' · '+dt(x.d):'')])});
+ S.plan.forEach(function(x){if(x.b&&x.d>=T)L.push(['Agenda',x.t+' · '+(x.d==T?'vandaag':dt(x.d))+(x.h?' '+x.h:'')])});
+ S.notes.forEach(function(x){if(x.b)L.push(['Notitie',x.t])});
+ S.ideas.forEach(function(x){if(x.b)L.push(['Idee',x.t])});
+ S.dreams.forEach(function(x){if(x.b)L.push(['Doel',x.t])});
+ return L}
+function popup(){var L=important();if(!L.length||document.getElementById('pop'))return;var d=document.createElement('div');d.id='pop';d.innerHTML='<div class="pb"><h2 style="color:var(--ac)">Belangrijk</h2><div class="pt">Vergeet dit niet</div>'+L.map(function(x){var t=x[1].length>140?x[1].slice(0,140)+'...':x[1];return '<div class="row"><div class="t"><div class="mu">'+x[0]+'</div>'+esc(t)+'</div></div>'}).join('')+'<button id="pok" style="width:100%;margin-top:14px">Begrepen</button></div>';document.body.appendChild(d);document.getElementById('pok').onclick=function(){d.remove()}}
+function work(o){
+ var ss=S.plan.filter(function(x){return x.w&&x.d>=T}).sort(function(a,b){return (a.d+(a.h||'')).localeCompare(b.d+(b.h||''))}),last='',h='';
+ ss.forEach(function(x){if(x.d!=last){last=x.d;h+='<div class="mu" style="margin-top:10px"><b>'+(x.d==T?'Vandaag':dt(x.d))+'</b></div>'}h+=irow(x)});
+ return '<h1 style="font-size:28px;margin:28px 0 14px">Werkplanning</h1><div class="c"><h2>Wanneer pak je het aan?</h2>'+(o.length?'<select id="wi">'+o.map(function(x){return '<option value="'+x.id+'">'+x.v+' · '+esc(x.t)+'</option>'}).join('')+'</select><div class="r"><input id="wd" type="date" value="'+T+'"><input id="wt" type="time"></div><input id="wm" inputmode="numeric" placeholder="Hoeveel minuten? (60)"><button data-a="addWork" style="width:100%">In werkplanning zetten</button>':'<div class="mu">Voeg eerst huiswerk toe, dan kun je hier inplannen wanneer je eraan werkt.</div>')+'</div><div class="c"><h2>Mijn werkmomenten</h2>'+(h||'<div class="mu">Nog niets ingepland.</div>')+'</div>'}
 NAV.splice(NAV.findIndex(function(n){return n[0]=='school'})+1,0,['huiswerk','','Huiswerk']);
 NAV.unshift(['home','','Home']);
 function e0(n){return '€ '+Math.round(n).toLocaleString('nl-NL')}
@@ -238,6 +258,8 @@ function idx(a,i){return a.findIndex(function(x){return x.id==i})}
 var A={
 nav:function(i){page=i;window.scrollTo(0,0)},
 pv:function(i){pv=i;po=0},
+imp:function(i){var a=i.split(':'),x=S[a[0]][idx(S[a[0]],a[1])];if(x)x.b=x.b?0:1},
+addWork:function(){var i=v('wi');if(!i)return;var x=S.hw[idx(S.hw,i)],m=Math.round(num(v('wm')))||60;S.plan.push({id:Date.now(),t:'Werken aan '+x.v+': '+x.t+' ('+m+' min)',d:v('wd')||T,h:v('wt'),k:'School',r:x.id,w:1})},
 addHw:function(){if(!v('hq'))return;var id=Date.now(),d=v('hd');S.hw.push({id:id,v:v('hv'),t:v('hq'),d:d,x:0});if(d)S.plan.push({id:id+1,t:'Huiswerk '+v('hv')+': '+v('hq'),d:d,h:'',k:'School',r:id})},
 togHw:function(i){var x=S.hw[idx(S.hw,i)];x.x=x.x?0:1},
 delHw:function(i){S.hw.splice(idx(S.hw,i),1);S.plan=S.plan.filter(function(x){return x.r!=i})},
@@ -280,7 +302,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-a]')
 document.addEventListener('gesturestart',function(e){e.preventDefault()});
 document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault()},{passive:false});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)render()});
-render();
+var hid=0;document.addEventListener('visibilitychange',function(){if(document.hidden)hid=Date.now();else if(hid&&Date.now()-hid>3e5)popup()});
+render();popup();
 </script>
 </body>
 </html>
